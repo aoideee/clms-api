@@ -48,14 +48,4 @@ db/migrations/fix:
 ## db/migrations/init: Create all initial library system migrations
 .PHONY: db/migrations/init
 db/migrations/init:
-	make db/migrations/new name=create_books_table
-	make db/migrations/new name=create_author_table
-	make db/migrations/new name=create_genre_table
-	make db/migrations/new name=create_branch_table
-	make db/migrations/new name=create_member_table
-	make db/migrations/new name=create_copy_table
-	make db/migrations/new name=create_loans_table
-	make db/migrations/new name=create_fine_table
-	make db/migrations/new name=create_reservation_table
-	make db/migrations/new name=create_book_author_table
-	make db/migrations/new name=create_book_genre_table
+	make db/migrations/new name=create_clms_schema
