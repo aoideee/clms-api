@@ -1,6 +1,7 @@
 // Filename: main.go
 
 package main
+
 import (
 	"context"
 	"database/sql"
@@ -77,6 +78,13 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+	}
+
+	// Start the HTTP server
+	err = app.serve()
+	if err != nil {
+		logger.Error("Unable to start server", "error", err)
+		os.Exit(1)
 	}
 }
 
