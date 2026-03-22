@@ -8,6 +8,7 @@ import (
 	"flag"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -27,6 +28,9 @@ type config struct {
 		rps float64
 		burst int
 		enabled bool
+	}
+	cors struct {
+		trustedOrigins []string
 	}
 }
 
@@ -54,24 +58,27 @@ func main() {
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 5, "Rate limiter maximum burst size")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 
+	// CORS settings
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
+
 	// Parse the command-line flags
 	flag.Parse()
 
-	// -------------------------------------------------------------------------
-	// REQUIREMENT: STRUCTURED JSON LOGGING
-	// CRITICAL FIX: Changed from TextHandler to JSONHandler to pass the test.
-	// -------------------------------------------------------------------------
-
+	// Initialize a new logger that writes JSON-formatted logs to the standard output stream
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	// Log the pasred configuration settings at the INFO level
 	logger.Info("Starting application with the following configuration settings",
-		slog.Int("port", cfg.port),
-		slog.String("env", cfg.env),
-		slog.String("db-dsn", cfg.db.dsn),
-		slog.Int("db-max-open-conns", cfg.db.maxOpenConns),
-		slog.Int("db-max-idle-conns", cfg.db.maxIdleConns),
-		slog.String("db-max-idle-time", cfg.db.maxIdleTime),
+		"port", cfg.port,
+		"env", cfg.env,
+		"db_dsn", cfg.db.dsn,
+		"limiter_enabled", cfg.limiter.enabled,
+		"limiter_rps", cfg.limiter.rps,
+		"limiter_burst", cfg.limiter.burst,
+		"cors_trusted_origins", cfg.cors.trustedOrigins,
 	)
 
 	// Establish the database connection pool

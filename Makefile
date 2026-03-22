@@ -9,12 +9,13 @@ run: run/api
 .PHONY: run/api
 run/api:
 	@echo 'Starting the Community Library API...'
-	go run ./cmd/api \
+	@ go run ./cmd/api \
 		-port=4000 \
 		-env=development \
 		-limiter-enabled=true \
 		-limiter-rps=2 \
 		-limiter-burst=5 \
+		-cors-trusted-origins="http://localhost:9000 http://localhost:9001" \
 		-db-dsn=${CLMS_DB_DSN}
 
 ## db/psql: Connect to the library database using psql
