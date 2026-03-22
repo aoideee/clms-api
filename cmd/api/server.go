@@ -17,8 +17,7 @@ func (app *application) serve() error {
 	// Configire the HTTP server with robust timeouts
 	srv := &http.Server{
 		Addr: 	   fmt.Sprintf(":%d", app.config.port),
-		// Temporrily use the default HTTP mux until we set up our own
-		Handler:   http.DefaultServeMux,
+		Handler:   app.routes(),
 		IdleTimeout: time.Minute,
 		ReadTimeout: 10 * time.Second,
 		WriteTimeout: 30 * time.Second,
