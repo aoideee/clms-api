@@ -41,7 +41,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 				mu.Unlock()
 
 				w.Header().Set("Retry-After", "1")
-				http.Error(w, "Rate limit exceeded. Please wait and try again.", http.StatusTooManyRequests)
+				app.rateLimitExceededResponse(w, r)
 				return
 			}
 
