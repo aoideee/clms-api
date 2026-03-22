@@ -5,12 +5,16 @@ include .envrc
 .PHONY: run
 run: run/api
 
-## run/api: Run the API server application
+## run/api: run the cmd/api application
 .PHONY: run/api
 run/api:
-	@echo 'Running application…'
-	@go run ./cmd/api -port=4000 \
+	@echo 'Starting the Community Library API...'
+	go run ./cmd/api \
+		-port=4000 \
 		-env=development \
+		-limiter-enabled=true \
+		-limiter-rps=2 \
+		-limiter-burst=5 \
 		-db-dsn=${CLMS_DB_DSN}
 
 ## db/psql: Connect to the library database using psql
