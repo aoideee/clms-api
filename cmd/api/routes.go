@@ -15,6 +15,6 @@ func (app *application) routes() http.Handler {
 		w.Write([]byte("The Community Library Management System (CLMS) is up and running!"))
 	})
 
-	return app.rateLimit(mux)
+	return app.enableCORS(app.rateLimit(mux))
 
 }
