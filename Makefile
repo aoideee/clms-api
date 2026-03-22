@@ -11,9 +11,6 @@ run/api:
 	@echo 'Running application…'
 	@go run ./cmd/api -port=4000 \
 		-env=development \
-		-limiter-burst=5 \
-		-limiter-rps=2 \
-		-limiter-enabled=false \
 		-db-dsn=${CLMS_DB_DSN}
 
 ## db/psql: Connect to the library database using psql
