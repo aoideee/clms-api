@@ -4,6 +4,7 @@ package data
 
 import (
 	"time"
+	"database/sql"
 )
 
 // Member represents an individual who holds a library card in our system.
@@ -18,5 +19,5 @@ type Member struct {
 
 // MemberModel is the bridge to the members table in our database.
 type MemberModel struct {
-	// The database connection pool will be added here
+	DB *sql.DB
 }

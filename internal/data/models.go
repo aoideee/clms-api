@@ -21,9 +21,9 @@ type Models struct {
 // NewModels returns a fully populated Models struct, initializing each individual model with the database connection pool.
 func NewModels(db *sql.DB) Models {
 	return Models{
-		Books: BookModel{},
-		Fines: FineModel{},
-		Loans: LoanModel{},
-		Members: MemberModel{},
+		Books: BookModel{DB: db},
+		Fines: FineModel{DB: db},
+		Loans: LoanModel{DB: db},
+		Members: MemberModel{DB: db},
 	}
 }

@@ -4,6 +4,7 @@ package data
 
 import (
 	"time"
+	"database/sql"
 )
 
 // Fine represents a monetary penalty in our library system.
@@ -19,5 +20,5 @@ type Fine struct {
 
 // FineModel is the bridge to the fines table in our database.
 type FineModel struct {
-	// The database connection pool will be added here
+	DB *sql.DB
 }
