@@ -1,8 +1,9 @@
-// Filenaeme: routes.go
+// Filename: routes.go
 
 package main
 
 import (
+	"expvar"
 	"net/http"
 )
 
@@ -14,6 +15,8 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("/v1/healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("The Community Library Management System (CLMS) is up and running!"))
 	})
+
+	mux.Handle("/v1/observability/metrics", expvar.Handler())
 
 	return app.enableCORS(app.rateLimit(mux))
 
