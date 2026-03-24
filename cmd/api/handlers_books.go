@@ -60,6 +60,24 @@ func (app *application) createBookHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// listBooksHandler handles GET requests to retrieve a list of books.
+func (app *application) listBooksHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract query parameters
+	title := r.URL.Query().Get("title")
+	isbn := r.URL.Query().Get("isbn")
+
+	books, err := app.models.Books.GetAll(title, isbn)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"books": books}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
 // showBookHandler handles GET requests to retrieve a single book.
 func (app *application) showBookHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract the ID from the URL path. Go 1.22+ makes this very easy with r.PathValue()

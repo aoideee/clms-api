@@ -90,6 +90,46 @@ func (m BookModel) Get(id int64) (*Book, error) {
 	return &book, nil
 }
 
+func (m BookModel) GetAll(title string, isbn string) ([]*Book, error) {
+	// We use ILIKE for case-insensitive searching
+	query := `
+		SELECT BookID, Title, ISBN, Publisher, PublicationYear, MinimumAge, Description
+		FROM Books
+		WHERE (STRPOS(LOWER(Title), LOWER($1)) > 0 OR $1 = '')
+		AND (STRPOS(LOWER(ISBN), LOWER($2)) > 0 OR $2 = '')
+		ORDER BY BookID`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, title, isbn)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	books := []*Book{}
+
+	for rows.Next() {
+		var book Book
+		err := rows.Scan(
+			&book.ID,
+			&book.Title,
+			&book.ISBN,
+			&book.Publisher,
+			&book.PublicationYear,
+			&book.MinimumAge,
+			&book.Description,
+		)
+		if err != nil {
+			return nil, err
+		}
+		books = append(books, &book)
+	}
+
+	return books, nil
+}
+
 // Update applies changes to a specific book record in the database.
 func (m BookModel) Update(book *Book) error {
 	// The SQL query to update the record. We use the BookID to ensure 

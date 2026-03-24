@@ -24,6 +24,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /v1/books/{id}", app.showBookHandler)
 	mux.HandleFunc("PATCH /v1/books/{id}", app.updateBookHandler)
 	mux.HandleFunc("DELETE /v1/books/{id}", app.deleteBookHandler)
+	mux.HandleFunc("GET /v1/books", app.listBooksHandler)
 
 	// Register the handler functions for the "/v1/members" endpoints
 	mux.HandleFunc("POST /v1/members", app.createMemberHandler)

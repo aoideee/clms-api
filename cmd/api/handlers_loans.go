@@ -46,6 +46,7 @@ func (app *application) createLoanHandler(w http.ResponseWriter, r *http.Request
 
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/loans/%d", loan.ID))
+	totalBooksLoaned.Add(1)
 
 	// Return the receipt to the patron!
 	err = app.writeJSON(w, http.StatusCreated, envelope{"loan": loan}, headers)

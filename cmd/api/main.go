@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"expvar"
 
 	"github.com/aoideee/clms-api/internal/data"
 	_ "github.com/lib/pq"
@@ -41,6 +42,13 @@ type application struct {
 	logger *slog.Logger
 	models data.Models
 }
+
+// Custom metrics to track library activity
+var (
+	totalBooksLoaned  = expvar.NewInt("total_books_loaned")
+	totalFinesCreated = expvar.NewInt("total_fines_created")
+	totalMembersRegistered = expvar.NewInt("total_members_registered")
+)
 
 func main() {
 	var cfg config

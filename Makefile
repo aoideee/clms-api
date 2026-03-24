@@ -52,6 +52,18 @@ db/migrations/fix:
 db/migrations/init:
 	make db/migrations/new name=create_clms_schema
 
+## db/seed: reset database and populate with authentic Belizean data
+.PHONY: db/seed
+db/seed:
+	@echo 'Resetting database and injecting seed data...'
+	psql "host=localhost dbname=clms user=clms password=clms" -f ./seed.sql
+
+## db/clean: wipe transaction tables for a fresh test run
+.PHONY: db/clean
+db/clean:
+	@echo 'Cleaning transaction tables (Loans/Fines)...'
+	psql "host=localhost dbname=clms user=clms password=clms" -c "TRUNCATE Loans, Fine RESTART IDENTITY CASCADE;"
+
 ## test/api: automatically test all core CRUD and business logic endpoints
 .PHONY: test/api
 test/api:

@@ -59,6 +59,7 @@ func (app *application) createMemberHandler(w http.ResponseWriter, r *http.Reque
 
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/members/%d", member.ID))
+	totalMembersRegistered.Add(1)
 
 	err = app.writeJSON(w, http.StatusCreated, envelope{"member": member}, headers)
 	if err != nil {

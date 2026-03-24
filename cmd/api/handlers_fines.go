@@ -42,6 +42,7 @@ func (app *application) createFineHandler(w http.ResponseWriter, r *http.Request
 
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/fines/%d", fine.ID))
+	totalFinesCreated.Add(1)
 
 	// Return the receipt!
 	err = app.writeJSON(w, http.StatusCreated, envelope{"fine": fine}, headers)
