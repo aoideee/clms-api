@@ -4,6 +4,7 @@ package data
 
 import (
 	"time"
+	"database/sql"
 )
 
 // Loan tracks the borrowing of a book by a member.
@@ -22,5 +23,5 @@ type Loan struct {
 
 // LoanModel is the bridge to the loans table in our database.
 type LoanModel struct {
-	// The database connection pool will be added here
+	DB *sql.DB
 }
