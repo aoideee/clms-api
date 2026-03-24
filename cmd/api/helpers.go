@@ -35,3 +35,19 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 
 	return nil
 }
+
+// readJSON securely decodes the incoming JSON request body into a target destination.
+func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	// Initialize the json.Decoder, and call DisallowUnknownFields() on it before decoding.
+	// This ensures that if the client sends fields that do not exist in our target struct,
+	// the request will be rejected rather than silently ignoring the extra data.
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
+	err := dec.Decode(dst)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

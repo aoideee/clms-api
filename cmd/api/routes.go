@@ -18,6 +18,12 @@ func (app *application) routes() http.Handler {
 
 	mux.Handle("/v1/observability/metrics", expvar.Handler())
 
+	// Register the handler functions for the "/v1/books" endpoints
+	mux.HandleFunc("POST /v1/books", app.createBookHandler)
+	mux.HandleFunc("GET /v1/books/{id}", app.showBookHandler)
+	mux.HandleFunc("PATCH /v1/books/{id}", app.updateBookHandler)
+	mux.HandleFunc("DELETE /v1/books/{id}", app.deleteBookHandler)
+
 	return app.enableCORS(app.rateLimit(app.compressResponse(mux)))
 
 }
