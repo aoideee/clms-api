@@ -1,3 +1,3 @@
-// Filename: handlers_memebers.go
+// Filename: handlers_members.go
 
 package main

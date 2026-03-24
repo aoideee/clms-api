@@ -8,10 +8,10 @@ import (
 )
 
 // envelope is a generic wrapper for JSON responses. It is used to ensure that all responses have a consistent structure.
-type enevelope map[string]any
+type envelope map[string]any
 
 // writeJSON takes the data, formats it as JSON, and writes it to the http.ResponseWriter along with the provided status code and headers.
-func (app *application) writeJSON(w http.ResponseWriter, status int, data enevelope, headers http.Header) error {
+func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	// MarshalIndent makes the JSON easy for humans to read by adding indentation and newlines.
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {

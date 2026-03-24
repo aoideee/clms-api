@@ -14,7 +14,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// config holds all the rules and settings for our applicaton
+// config holds all the rules and settings for our application
 type config struct {
 	port int
 	env string 
@@ -70,7 +70,7 @@ func main() {
 	// Initialize a new logger that writes JSON-formatted logs to the standard output stream
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	// Log the pasred configuration settings at the INFO level
+	// Log the parsed configuration settings at the INFO level
 	logger.Info("Starting application with the following configuration settings",
 		"port", cfg.port,
 		"env", cfg.env,
