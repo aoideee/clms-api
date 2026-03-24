@@ -64,47 +64,75 @@ db/clean:
 	@echo 'Cleaning transaction tables (Loans/Fines)...'
 	psql "host=localhost dbname=clms user=clms password=clms" -c "TRUNCATE Loans, Fine RESTART IDENTITY CASCADE;"
 
-## test/api: automatically test all core CRUD and business logic endpoints
+## test/api: test all core logic (including a successful member registration)
 .PHONY: test/api
 test/api:
 	@echo '====================================================='
 	@echo '1. TESTING BOOKS: Create a Book'
 	@echo '====================================================='
-	curl -i -d '{"title": "Automated Test Book", "isbn": "0000000000000", "publisher": "Test Press", "publication_year": 2026, "minimum_age": 5, "description": "Testing the makefile."}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/books
+	@curl -s -i -d '{"title": "Automated Test Book", "isbn": "0000000000000", "publisher": "Test Press", "publication_year": 2026, "minimum_age": 5, "description": "Testing the makefile."}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/books
+	@echo ''
+	@echo ''
 	@echo '====================================================='
-	@echo '2. TESTING MEMBERS: The Validator (Bad Email)'
+	@echo '2. TESTING MEMBERS: Registration (Success & Validator)'
 	@echo '====================================================='
-	curl -i -d '{"first_name": "Test", "last_name": "User", "dob": "2000-01-01", "email": "bad-email", "account_status": "Active"}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/members
+	@# Test 2a: Successful Registration (to tick the metrics counter)
+	@curl -s -i -d '{"first_name": "Tysha", "last_name": "Daniels", "dob": "2006-01-01", "email": "tysha@example.com", "account_status": "Active"}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/members
+	@echo ''
+	@echo ''
+	@# Test 2b: Validator Rejection
+	@curl -s -i -d '{"first_name": "Test", "last_name": "User", "dob": "2000-01-01", "email": "bad-email", "account_status": "Active"}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/members
+	@echo ''
+	@echo ''
 	@echo '====================================================='
 	@echo '3. TESTING CIRCULATION: Checkout a Book'
 	@echo '====================================================='
-	curl -i -d '{"copy_id": 1, "member_id": 1}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/loans
+	@curl -s -i -d '{"copy_id": 1, "member_id": 1}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/loans
+	@echo ''
+	@echo ''
 	@echo '====================================================='
 	@echo '4. TESTING CASHIER: BNLSIS Registration Fee'
 	@echo '====================================================='
-	curl -i -d '{"member_id": 1, "fine_type": "Local Membership Fee", "amount": 3.00, "paid_status": false}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/fines
+	@curl -s -i -d '{"member_id": 1, "fine_type": "Local Membership Fee", "amount": 3.00, "paid_status": false}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/fines
+	@echo ''
+	@echo ''
 	@echo '====================================================='
 	@echo '--- API AUDIT COMPLETE ---'
 	@echo '====================================================='
 
-## test/network: test CORS, metrics, and rate limiting
+## test/network: test CORS, metrics, and compression
 .PHONY: test/network
 test/network:
 	@echo '====================================================='
-	@echo '1. TESTING CORS (Preflight from localhost:9000)'
+	@echo '1. TESTING CORS (Preflight)'
 	@echo '====================================================='
-	curl -i -H "Origin: http://localhost:9000" -H "Access-Control-Request-Method: POST" -X OPTIONS http://localhost:4000/v1/books
-	@echo '\n\n====================================================='
-	@echo '2. TESTING METRICS (Viewing server stats FIRST)'
+	@curl -s -i -H "Origin: http://localhost:9000" -H "Access-Control-Request-Method: POST" -X OPTIONS http://localhost:4000/v1/books | grep -Ei "Access-Control-Allow-Origin" || true
+	@echo ''
+	@echo ''
 	@echo '====================================================='
-	curl -s http://localhost:4000/debug/vars
-	@echo '\n\n====================================================='
-	@echo '3. TESTING RATE LIMITER (Bursting 6 fast requests)'
+	@echo '2. TESTING METRICS (Viewing counters)'
+	@echo '====================================================='
+	@curl -s http://localhost:4000/debug/vars | grep -Ei "total_" || true
+	@echo ''
+	@echo ''
+	@echo '====================================================='
+	@echo '3. TESTING RATE LIMITER (Bursting)'
 	@echo '====================================================='
 	@for i in 1 2 3 4 5 6; do \
 		curl -s -o /dev/null -w "Request $$i: %{http_code}\n" http://localhost:4000/v1/healthcheck; \
 	done
-	@sleep 1
-	@echo '\n====================================================='
+	@echo ''
+	@echo ''
+	@echo '====================================================='
+	@echo '4. TESTING COMPRESSION (GZIP vs Identity)'
+	@echo '====================================================='
+	@echo 'UNCOMPRESSED (Books):'
+	@curl -s -i -H "Accept-Encoding: identity" http://localhost:4000/v1/books | grep -Ei "Content-Length|Content-Encoding|Vary" || true
+	@echo ''
+	@echo 'COMPRESSED (Metrics - Large File):'
+	@# We check for Content-Encoding, Transfer-Encoding, and Vary
+	@curl -s -i -H "Accept-Encoding: gzip" http://localhost:4000/debug/vars | grep -aEi "Content-Encoding|Transfer-Encoding|Vary" || true
+	@echo ''
+	@echo '====================================================='
 	@echo '--- INFRASTRUCTURE AUDIT COMPLETE ---'
 	@echo '====================================================='

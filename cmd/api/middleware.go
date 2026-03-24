@@ -3,13 +3,13 @@
 package main
 
 import (
+	"compress/gzip"
+	"fmt"
+	"io"
 	"net"
 	"net/http"
-	"sync"
-	"compress/gzip"
-	"io"
 	"strings"
-
+	"sync"
 
 	"golang.org/x/time/rate"
 )
@@ -62,8 +62,12 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Add the "Vary: Origin" header to tell browsers that the response
 		// may vary based on the Origin header, preventing improper caching
-		w.Header().Add("Vary", "Origin")
-		w.Header().Add("Vary", "Access-Control-Request-Method")
+		vary := w.Header().Get("Vary")
+		if vary != "" {
+			w.Header().Set("Vary", "Origin, Access-Control-Request-Method, " + vary)
+		} else {
+			w.Header().Set("Vary", "Origin, Access-Control-Request-Method")
+		}
 
 		origin := r.Header.Get("Origin")
 
@@ -75,7 +79,7 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 
 					// If it's a preflight request, add the necessary headers and return a 200 OK response
 					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
-						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
+						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, PUT, PATCH, DELETE")
 						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 
 						w.WriteHeader(http.StatusOK)
@@ -95,29 +99,54 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 type gzipResponseWriter struct {
 	io.Writer
 	http.ResponseWriter
+	wroteHeader bool
 }
 
-func (w gzipResponseWriter) Write(b []byte) (int, error) {
+func (w *gzipResponseWriter) WriteHeader(statusCode int) {
+	if !w.wroteHeader {
+		w.ResponseWriter.Header().Del("Content-Length")
+		w.ResponseWriter.WriteHeader(statusCode)
+		w.wroteHeader = true
+	}
+}
+
+func (w *gzipResponseWriter) Write(b []byte) (int, error) {
+	if !w.wroteHeader {
+		w.WriteHeader(http.StatusOK)
+	}
 	return w.Writer.Write(b)
 }
 
 // compressResponse is a middleware function that compresses the response body using gzip if the client supports it.
 func (app *application) compressResponse(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// If the client doesn't support gzip compression, call the next handler in the chain without modifying the response
-		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		// 1. Check for gzip support (case-insensitive)
+		if !strings.Contains(strings.ToLower(r.Header.Get("Accept-Encoding")), "gzip") {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Create the gzip writer
+		// 2. Set headers immediately before the handler runs
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Add("Vary", "Accept-Encoding")
+
+		// 3. Wrap the response in our gzip writer
 		gz := gzip.NewWriter(w)
 		defer gz.Close()
 
-		// Set the header so the browser knows the content is compressed.
-		w.Header().Set("Content-Encoding", "gzip")
+		next.ServeHTTP(&gzipResponseWriter{Writer: gz, ResponseWriter: w}, r)
+	})
+}
 
-		// Wrap the response writer and pass it to the next handler
-		next.ServeHTTP(gzipResponseWriter{Writer: gz, ResponseWriter: w}, r)
+// recoverPanic is a middleware function that recovers from any panics that occur during the handling of a request and returns a 500 Internal Server Error response.
+func (app *application) recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.Header().Set("Connection", "close")
+				app.serverErrorResponse(w, r, fmt.Errorf("%v", err))
+			}
+		}()
+		next.ServeHTTP(w, r)
 	})
 }

@@ -38,6 +38,6 @@ func (app *application) routes() http.Handler {
 	// Register the handler functions for the "/v1/fines" endpoints
 	mux.HandleFunc("POST /v1/fines", app.createFineHandler)
 
-	return app.enableCORS(app.rateLimit(app.compressResponse(mux)))
+	return app.compressResponse(app.recoverPanic(app.enableCORS(app.rateLimit(mux))))
 
 }
