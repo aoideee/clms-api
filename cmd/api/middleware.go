@@ -6,6 +6,10 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"compress/gzip"
+	"io"
+	"strings"
+
 
 	"golang.org/x/time/rate"
 )
@@ -84,5 +88,36 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 
 		// Call the next handler in the chain
 		next.ServeHTTP(w, r)
+	})
+}
+
+// Gzip response writer that wraps the standard http.ResponseWriter and provides gzip compression for the response body.
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+// compressResponse is a middleware function that compresses the response body using gzip if the client supports it.
+func (app *application) compressResponse(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// If the client doesn't support gzip compression, call the next handler in the chain without modifying the response
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Create the gzip writer
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+
+		// Set the header so the browser knows the content is compressed.
+		w.Header().Set("Content-Encoding", "gzip")
+
+		// Wrap the response writer and pass it to the next handler
+		next.ServeHTTP(gzipResponseWriter{Writer: gz, ResponseWriter: w}, r)
 	})
 }

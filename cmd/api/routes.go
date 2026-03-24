@@ -18,6 +18,6 @@ func (app *application) routes() http.Handler {
 
 	mux.Handle("/v1/observability/metrics", expvar.Handler())
 
-	return app.enableCORS(app.rateLimit(mux))
+	return app.enableCORS(app.rateLimit(app.compressResponse(mux)))
 
 }
