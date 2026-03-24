@@ -16,6 +16,7 @@ func (app *application) routes() http.Handler {
 		w.Write([]byte("The Community Library Management System (CLMS) is up and running!"))
 	})
 
+	mux.Handle("GET /debug/vars", expvar.Handler())
 	mux.Handle("/v1/observability/metrics", expvar.Handler())
 
 	// Register the handler functions for the "/v1/books" endpoints

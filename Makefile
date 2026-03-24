@@ -51,3 +51,48 @@ db/migrations/fix:
 .PHONY: db/migrations/init
 db/migrations/init:
 	make db/migrations/new name=create_clms_schema
+
+## test/api: automatically test all core CRUD and business logic endpoints
+.PHONY: test/api
+test/api:
+	@echo '====================================================='
+	@echo '1. TESTING BOOKS: Create a Book'
+	@echo '====================================================='
+	curl -i -d '{"title": "Automated Test Book", "isbn": "0000000000000", "publisher": "Test Press", "publication_year": 2026, "minimum_age": 5, "description": "Testing the makefile."}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/books
+	@echo '====================================================='
+	@echo '2. TESTING MEMBERS: The Validator (Bad Email)'
+	@echo '====================================================='
+	curl -i -d '{"first_name": "Test", "last_name": "User", "dob": "2000-01-01", "email": "bad-email", "account_status": "Active"}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/members
+	@echo '====================================================='
+	@echo '3. TESTING CIRCULATION: Checkout a Book'
+	@echo '====================================================='
+	curl -i -d '{"copy_id": 1, "member_id": 1}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/loans
+	@echo '====================================================='
+	@echo '4. TESTING CASHIER: BNLSIS Registration Fee'
+	@echo '====================================================='
+	curl -i -d '{"member_id": 1, "fine_type": "Local Membership Fee", "amount": 3.00, "paid_status": false}' -H "Content-Type: application/json" -X POST http://localhost:4000/v1/fines
+	@echo '====================================================='
+	@echo '--- API AUDIT COMPLETE ---'
+	@echo '====================================================='
+
+## test/network: test CORS, metrics, and rate limiting
+.PHONY: test/network
+test/network:
+	@echo '====================================================='
+	@echo '1. TESTING CORS (Preflight from localhost:9000)'
+	@echo '====================================================='
+	curl -i -H "Origin: http://localhost:9000" -H "Access-Control-Request-Method: POST" -X OPTIONS http://localhost:4000/v1/books
+	@echo '\n\n====================================================='
+	@echo '2. TESTING METRICS (Viewing server stats FIRST)'
+	@echo '====================================================='
+	curl -s http://localhost:4000/debug/vars
+	@echo '\n\n====================================================='
+	@echo '3. TESTING RATE LIMITER (Bursting 6 fast requests)'
+	@echo '====================================================='
+	@for i in 1 2 3 4 5 6; do \
+		curl -s -o /dev/null -w "Request $$i: %{http_code}\n" http://localhost:4000/v1/healthcheck; \
+	done
+	@sleep 1
+	@echo '\n====================================================='
+	@echo '--- INFRASTRUCTURE AUDIT COMPLETE ---'
+	@echo '====================================================='
