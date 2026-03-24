@@ -13,7 +13,7 @@ func (app *application) logError(r *http.Request, err error) {
 
 // errorResponse is the foundational helper for sending any JSON error message
 func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, status int, message any) {
-	env := enevelope{"error": message}
+	env := envelope{"error": message}
 
 	err := app.writeJSON(w, status, env, nil)
 	if err != nil {
@@ -30,7 +30,7 @@ func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Reque
 	app.errorResponse(w, r, http.StatusInternalServerError, message)
 }
 
-//  rateeLimitExceededResponse handles 429 Too Many Requests errors
+// rateLimitExceededResponse handles 429 Too Many Requests errors
 func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
 	message := "You have exceeded your rate limit. Please try again later."
 	app.errorResponse(w, r, http.StatusTooManyRequests, message)
