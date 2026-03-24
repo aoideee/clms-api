@@ -30,6 +30,12 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("PATCH /v1/members/{id}", app.updateMemberHandler)
 	mux.HandleFunc("DELETE /v1/members/{id}", app.deleteMemberHandler)
 
+	// Register the handler functions for the "/v1/loans" endpoints
+	mux.HandleFunc("POST /v1/loans", app.createLoanHandler)
+
+	// Register the handler functions for the "/v1/fines" endpoints
+	mux.HandleFunc("POST /v1/fines", app.createFineHandler)
+
 	return app.enableCORS(app.rateLimit(app.compressResponse(mux)))
 
 }
