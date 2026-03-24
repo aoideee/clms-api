@@ -41,3 +41,9 @@ func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request)
 	message := "The requested resource could not be found."
 	app.errorResponse(w, r, http.StatusNotFound, message)
 }
+
+
+// failedValidationResponse sends a 422 Unprocessable Entity status code and the map of validation errors.
+func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
+}
