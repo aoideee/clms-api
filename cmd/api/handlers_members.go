@@ -24,7 +24,7 @@ func (app *application) createMemberHandler(w http.ResponseWriter, r *http.Reque
 		AccountStatus string `json:"account_status"`
 	}
 
-	err := app.readJSON(w, r, &input)
+	err := app.readJSON(r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -118,7 +118,7 @@ func (app *application) updateMemberHandler(w http.ResponseWriter, r *http.Reque
 		AccountStatus *string `json:"account_status"`
 	}
 
-	err = app.readJSON(w, r, &input)
+	err = app.readJSON(r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return

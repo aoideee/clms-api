@@ -19,7 +19,7 @@ func (app *application) createFineHandler(w http.ResponseWriter, r *http.Request
 		PaidStatus bool    `json:"paid_status"`
 	}
 
-	err := app.readJSON(w, r, &input)
+	err := app.readJSON(r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return
