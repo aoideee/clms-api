@@ -5,7 +5,9 @@ CREATE TABLE Users (
     PasswordHash BYTEA, -- Nullable because members might use Magic Links instead of passwords
     FirstName VARCHAR(100) NOT NULL,
     LastName VARCHAR(100) NOT NULL,
-    Role VARCHAR(20) NOT NULL DEFAULT 'Member' -- e.g., 'Member', 'Librarian', 'Manager'
+    Role VARCHAR(20) NOT NULL DEFAULT 'Member', -- e.g., 'Member', 'Librarian', 'Manager'
+    Activated BOOLEAN NOT NULL DEFAULT FALSE, -- Added for email verification
+    Version INTEGER NOT NULL DEFAULT 1 -- Added for optimistic locking
 );
 
 -- NEW: Add Tokens table for authentication
