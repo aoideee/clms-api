@@ -13,11 +13,11 @@ import (
 
 // Define the different scopes/purposes a token can have in the CLMS
 type Token struct {
-	Plaintext string `json:"token"`
-	Hash      []byte `json:"-"` // Never expose the hash to the client
-	UserID    int64  `json:"-"`
+	Plaintext string    `json:"token"`
+	Hash      []byte    `json:"-"` // Never expose the hash to the client
+	UserID    int64     `json:"-"`
 	Expiry    time.Time `json:"expiry"`
-	Scope     string `json:"-"`
+	Scope     string    `json:"-"`
 }
 
 // generateToken create a cryptographically secure token
@@ -25,7 +25,7 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 	token := &Token{
 		UserID: userID,
 		Expiry: time.Now().Add(ttl),
-		Scope: scope,
+		Scope:  scope,
 	}
 
 	// Cretae a byte slice and fill it with 16 cryptographically secure random bytes
