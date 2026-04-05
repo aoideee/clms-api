@@ -8,6 +8,10 @@ CREATE TABLE Users (
     Role VARCHAR(20) NOT NULL DEFAULT 'Member', -- e.g., 'Member', 'Librarian', 'Manager'
     Activated BOOLEAN NOT NULL DEFAULT FALSE, -- Added for email verification
     Version INTEGER NOT NULL DEFAULT 1 -- Added for optimistic locking
+
+    CONSTRAINT users_password_check CHECK (
+        (Activated = false) OR (PasswordHash IS NOT NULL)
+    )
 );
 
 -- NEW: Add Tokens table for authentication

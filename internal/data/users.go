@@ -8,10 +8,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/aoideee/clms-api/internal/validator"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// ErrCUplicateEmail is a custom error raised when the email address already exists in the database.
+// ErrDuplicateEmail is a custom error raised when the email address already exists in the database.
 var ErrDuplicateEmail = errors.New("duplicate email")
 
 // ErrEditConflict is a custom error raised when the version number doesn't match
@@ -28,6 +29,10 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	Version   int       `json:"-"`
 }
+
+//*********************//
+// Password methods    //
+//*********************//	
 
 // password struct to hold the plaintext and hash of the password
 type password struct {
@@ -60,6 +65,44 @@ func (p *password) Matches(plaintextPassword string) (bool, error) {
 
 	return true, nil
 }
+
+//*********************//
+// Validation methods  //	
+//*********************//
+
+// ValidateEmail checks that the email address is not empty and matches the regex pattern
+func ValidateEmail(v *validator.Validator, email string) {
+	v.Check(email != "", "email", "must be provided")
+	v.Check(validator.Matches(email, validator.EmailRX), "email", "must be a valid email address")
+}
+
+// ValidatePasswordPlaintext ensures the password meets the strict length requirements
+func ValidatePasswordPlaintext(v *validator.Validator, password string) {
+	v.Check(password != "", "password", "must be provided")
+	v.Check(len(password) >= 8, "password", "must be at least 8 characters long")
+	v.Check(len(password) <= 72, "password", "must be less than 72 characters long")
+}
+
+// ValidateUser acts as a wrapper to validate all individual fields of a User struct
+func ValidateUser(v *validator.Validator, user *User) {
+	v.Check(user.FirstName != "", "first_name", "must be provided")
+	v.Check(len(user.FirstName) <= 100, "first_name", "must not be more than 100 characters long")
+
+	v.Check(user.LastName != "", "last_name", "must be provided")
+	v.Check(len(user.LastName) <= 100, "last_name", "must not be more than 100 characters long")
+
+	// Validae the email using the helper function
+	ValidateEmail(v, user.Email)
+
+	// Validate the plain text password
+	if user.Password.plaintext != nil {
+		ValidatePasswordPlaintext(v, *user.Password.plaintext)
+	}
+}
+
+//*********************//
+// Database methods    //
+//*********************//	
 
 // UserModel wraps the database connection pool
 type UserModel struct {
@@ -165,6 +208,7 @@ func (m UserModel) Update(user *User) error {
 			case err.Error() == `pq: duplicate key value violates unique constraint "user_email_key"`:
 				return ErrDuplicateEmail
 			case errors.Is(err, sql.ErrNoRows):
+				return ErrEditConflict
 			default:
 				return err
 			}
