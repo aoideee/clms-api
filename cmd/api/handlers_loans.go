@@ -18,7 +18,7 @@ func (app *application) createLoanHandler(w http.ResponseWriter, r *http.Request
 		MemberID int64 `json:"member_id"`
 	}
 
-	err := app.readJSON(w, r, &input)
+	err := app.readJSON(r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return

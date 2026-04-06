@@ -25,7 +25,7 @@ func (app *application) createBookHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Use our new helper to decode the request body into the input struct.
-	err := app.readJSON(w, r, &input)
+	err := app.readJSON(r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -139,7 +139,7 @@ func (app *application) updateBookHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// 4. Decode the JSON request
-	err = app.readJSON(w, r, &input)
+	err = app.readJSON(r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return

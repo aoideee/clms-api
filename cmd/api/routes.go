@@ -11,31 +11,70 @@ func (app *application) routes() http.Handler {
 	// Create a new servemux and register the handler functions for the different routes
 	mux := http.NewServeMux()
 
-	// Register the handler function for the "/v1/healthcheck" endpoint
+	//*********************//
+	// Default catch-all   //
+	//*********************//
+
+	mux.HandleFunc("/", app.notFoundResponse)
+
+	//*********************//
+	// Healthcheck endpoint//
+	//*********************//
+
 	mux.HandleFunc("/v1/healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("The Community Library Management System (CLMS) is up and running!"))
 	})
 
+	//*********************//
+	// Observability       //
+	//*********************//
+
 	mux.Handle("GET /debug/vars", expvar.Handler())
 	mux.Handle("/v1/observability/metrics", expvar.Handler())
 
-	// Register the handler functions for the "/v1/books" endpoints
+	//*********************//
+	// Books endpoints     //
+	//*********************//
+
 	mux.HandleFunc("POST /v1/books", app.createBookHandler)
 	mux.HandleFunc("GET /v1/books/{id}", app.showBookHandler)
 	mux.HandleFunc("PATCH /v1/books/{id}", app.updateBookHandler)
 	mux.HandleFunc("DELETE /v1/books/{id}", app.deleteBookHandler)
 	mux.HandleFunc("GET /v1/books", app.listBooksHandler)
 
-	// Register the handler functions for the "/v1/members" endpoints
+	//*********************//
+	// Users endpoints     //
+	//*********************//
+
+	// Register a new user (librarian)
+	mux.HandleFunc("POST /v1/users", app.registerUserHandler)
+	// Activate an account (user)
+	mux.HandleFunc("PUT /v1/users/activated", app.activateUserHandler)
+
+	//*********************//
+	// Tokens endpoints    //
+	//*********************//
+	mux.HandleFunc("POST /v1/tokens/authentication", app.createAuthenticationTokenHandler)
+
+	//*********************//
+	// Members endpoints   //
+	//*********************//
+
 	mux.HandleFunc("POST /v1/members", app.createMemberHandler)
 	mux.HandleFunc("GET /v1/members/{id}", app.showMemberHandler)
 	mux.HandleFunc("PATCH /v1/members/{id}", app.updateMemberHandler)
 	mux.HandleFunc("DELETE /v1/members/{id}", app.deleteMemberHandler)
 
-	// Register the handler functions for the "/v1/loans" endpoints
+	//*********************//
+	// Loans endpoints     //
+	//*********************//
+
 	mux.HandleFunc("POST /v1/loans", app.createLoanHandler)
 
-	// Register the handler functions for the "/v1/fines" endpoints
+	//*********************//
+	// Fines endpoints     //
+	//*********************//
+
 	mux.HandleFunc("POST /v1/fines", app.createFineHandler)
 
 	return app.compressResponse(app.recoverPanic(app.enableCORS(app.rateLimit(mux))))

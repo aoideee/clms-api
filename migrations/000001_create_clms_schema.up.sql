@@ -1,3 +1,27 @@
+-- NEW: Add Users table for authentication
+CREATE TABLE Users (
+    UserID SERIAL PRIMARY KEY,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    PasswordHash BYTEA, -- Nullable because members might use Magic Links instead of passwords
+    FirstName VARCHAR(100) NOT NULL,
+    LastName VARCHAR(100) NOT NULL,
+    Role VARCHAR(20) NOT NULL DEFAULT 'Member', -- e.g., 'Member', 'Librarian', 'Manager'
+    Activated BOOLEAN NOT NULL DEFAULT FALSE, -- Added for email verification
+    Version INTEGER NOT NULL DEFAULT 1 -- Added for optimistic locking
+
+    CONSTRAINT users_password_check CHECK (
+        (Activated = false) OR (PasswordHash IS NOT NULL)
+    )
+);
+
+-- NEW: Add Tokens table for authentication
+CREATE TABLE Tokens (
+    Hash BYTEA PRIMARY KEY,
+    UserID INT NOT NULL REFERENCES Users(UserID) ON DELETE CASCADE,
+    Expiry TIMESTAMP(0) WITH TIME ZONE NOT NULL,
+    Scope VARCHAR(50) NOT NULL -- e.g., 'authentication', 'activation', 'magic-link'
+);
+
 -- 1. Independent tables first
 CREATE TABLE Author (
     AuthorID SERIAL PRIMARY KEY,
@@ -30,15 +54,22 @@ CREATE TABLE Branch (
     Email VARCHAR(100)
 );
 
+--UPDATE: Add UserID to Member table to link it to the Users table
 CREATE TABLE Member (
     MemberID SERIAL PRIMARY KEY,
-    FirstName VARCHAR(100) NOT NULL,
-    LastName VARCHAR(100) NOT NULL,
+    UserID INT UNIQUE NOT NULL REFERENCES Users(UserID) ON DELETE CASCADE,
     DOB DATE NOT NULL,
     PhoneNumber VARCHAR(20),
-    Email VARCHAR(100) NOT NULL,
     Address TEXT,
     AccountStatus VARCHAR(20) NOT NULL DEFAULT 'Active'
+);
+
+-- NEW: Create Staff table for librarians and managers
+CREATE TABLE Staff (
+    StaffID SERIAL PRIMARY KEY,
+    UserID INT UNIQUE NOT NULL REFERENCES Users(UserID) ON DELETE CASCADE,
+    HireDate DATE NOT NULL,
+    BranchID INT NOT NULL REFERENCES Branch(BranchID)
 );
 
 -- 2. Tables with foreign key dependencies
@@ -92,7 +123,7 @@ CREATE TABLE Fine (
 -- 4. Apply Critical Indexes
 -- Unique Indexes for exact lookups
 CREATE UNIQUE INDEX idx_books_isbn ON Books(ISBN);
-CREATE UNIQUE INDEX idx_members_email ON Member(Email);
+CREATE UNIQUE INDEX idx_users_email ON Users(Email);
 CREATE UNIQUE INDEX idx_copy_barcode ON Copy(Barcode);
 
 -- Composite Indexes for filtering logic
