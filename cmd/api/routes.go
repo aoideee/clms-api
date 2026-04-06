@@ -52,6 +52,11 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("PUT /v1/users/activated", app.activateUserHandler)
 
 	//*********************//
+	// Tokens endpoints    //
+	//*********************//
+	mux.HandleFunc("POST /v1/tokens/authentication", app.createAuthenticationTokenHandler)
+
+	//*********************//
 	// Members endpoints   //
 	//*********************//
 
