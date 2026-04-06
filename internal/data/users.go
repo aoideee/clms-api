@@ -4,6 +4,7 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"time"
@@ -32,7 +33,7 @@ type User struct {
 
 //*********************//
 // Password methods    //
-//*********************//	
+//*********************//
 
 // password struct to hold the plaintext and hash of the password
 type password struct {
@@ -67,7 +68,7 @@ func (p *password) Matches(plaintextPassword string) (bool, error) {
 }
 
 //*********************//
-// Validation methods  //	
+// Validation methods  //
 //*********************//
 
 // ValidateEmail checks that the email address is not empty and matches the regex pattern
@@ -102,7 +103,7 @@ func ValidateUser(v *validator.Validator, user *User) {
 
 //*********************//
 // Database methods    //
-//*********************//	
+//*********************//
 
 // UserModel wraps the database connection pool
 type UserModel struct {
@@ -132,7 +133,7 @@ func (m UserModel) Insert(user *User) error {
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.UserID, &user.CreatedAt, &user.Version)
 	if err != nil {
 		switch {
-			// If the email already exists, PostgreSQL throws a unique constraint error
+		// If the email already exists, PostgreSQL throws a unique constraint error
 		case err.Error() == `pq: duplicate key value violates unique constraint "user_email_key"`:
 			return ErrDuplicateEmail
 		default:
@@ -144,37 +145,37 @@ func (m UserModel) Insert(user *User) error {
 }
 
 // GetByEmail retrives a user's details based on their email address
-func (m UserModel) GetByEmail (email string) (*User, error) {
+func (m UserModel) GetByEmail(email string) (*User, error) {
 	query := `
 		SELECT UserID, CreatedAt, FirstName, LastName, Email, PasswordHash, Role, Activated, Version
 		FROM Users
 		WHERE Email = $1`
 
-		var user User
+	var user User
 
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-		err := m.DB.QueryRowContext(ctx, query, email).Scan(
-			&user.UserID,
-			&user.CreatedAt,
-			&user.FirstName,
-			&user.LastName,
-			&user.Email,
-			&user.Password.hash,
-			&user.Role,
-			&user.Activated,
-			&user.Version,
-		)
-	
-		if err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-				return nil, ErrRecordNotFound
-			default:
-				return nil, err
-			}
+	err := m.DB.QueryRowContext(ctx, query, email).Scan(
+		&user.UserID,
+		&user.CreatedAt,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Password.hash,
+		&user.Role,
+		&user.Activated,
+		&user.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
 		}
+	}
 
 	return &user, nil
 }
@@ -187,32 +188,82 @@ func (m UserModel) Update(user *User) error {
 		WHERE UserID = $7 AND Version = $8
 		RETURNING Version`
 
-		args := []any{
-			user.FirstName,
-			user.LastName,
-			user.Email,
-			user.Password.hash,
-			user.Role,
-			user.Activated,
-			user.UserID,
-			user.Version,
-		}
+	args := []any{
+		user.FirstName,
+		user.LastName,
+		user.Email,
+		user.Password.hash,
+		user.Role,
+		user.Activated,
+		user.UserID,
+		user.Version,
+	}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-		err := m.DB.QueryRowContext(ctx, query,args...).Scan(&user.Version)
-		if err != nil {
-			switch {
-				// Checks if the updated email conflicts with another user
-			case err.Error() == `pq: duplicate key value violates unique constraint "user_email_key"`:
-				return ErrDuplicateEmail
-			case errors.Is(err, sql.ErrNoRows):
-				return ErrEditConflict
-			default:
-				return err
-			}
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
+	if err != nil {
+		switch {
+		// Checks if the updated email conflicts with another user
+		case err.Error() == `pq: duplicate key value violates unique constraint "user_email_key"`:
+			return ErrDuplicateEmail
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
 		}
+	}
 
 	return nil
+}
+
+//*********************//
+// Token methods       //
+//*********************//
+
+// GetForToken retieves a user from the database using a specific token and scope
+func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
+	// Calculate the hash for the plaintext token provided by the client
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+
+	// Uses an INNER JOIN to fetch the User details based on a match in the Tokens table
+	query := `
+			SELECT Users.UserID, Users.CreatedAt, Useres.FirstName, Users.LastName, Users.Email, Users.PasswordHash, Users.Role, Users.Activated, Users.Version
+			FROM Users
+			INNER JOIN Tokens ON Users.UserID = Tokens.UserID
+			WHERE Tokens.Hash = $1
+			AND Tokens.Scope = $2
+			AND Tokens.Expirey > $3`
+
+	// Pass tokenHash[:] to convert the array to a slice
+	args := []any{tokenHash[:], tokenScope, time.Now()}
+
+	var user User
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.UserID,
+		&user.CreatedAt,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Password.hash,
+		&user.Role,
+		&user.Activated,
+		&user.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &user, nil
+
 }
