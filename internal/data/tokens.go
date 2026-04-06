@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	ScopeActivation = "activation"
+	ScopeActivation     = "activation"
+	ScopeAuthentication = "authentication"
 )
 
 // Define the different scopes/purposes a token can have in the CLMS
