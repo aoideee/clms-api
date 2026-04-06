@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+const (
+	ScopeActivation = "activation"
+)
+
 // Define the different scopes/purposes a token can have in the CLMS
 type Token struct {
 	Plaintext string    `json:"token"`
