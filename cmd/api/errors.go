@@ -59,3 +59,9 @@ func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Reques
 	message := "The request could not be understood by the server due to malformed syntax."
 	app.errorResponse(w, r, http.StatusBadRequest, message)
 }
+
+// invalidCredentialsResponse handles 401 Unauthorized errors
+func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
+	message := "Invalid authentication credentials."
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
