@@ -47,3 +47,15 @@ func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request)
 func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
 	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
 }
+
+// editConflictResponse handles 409 Conflict errors
+func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
+	message := "Unable to update the record due to a conflict with another user's changes. Please try again."
+	app.errorResponse(w, r, http.StatusConflict, message)
+}
+
+// badRequestResponse handles 400 Bad Request errors
+func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	message := "The request could not be understood by the server due to malformed syntax."
+	app.errorResponse(w, r, http.StatusBadRequest, message)
+}
