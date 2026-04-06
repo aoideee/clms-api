@@ -1,5 +1,5 @@
 # Pass in the .envrc file, which exports CLMS_DB_DSN
-include .envrc
+-include .envrc
 
 ## run: Shortcut to run the API server (same as run/api)
 .PHONY: run
