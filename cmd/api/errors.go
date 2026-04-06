@@ -22,7 +22,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
-// serverErrorResponse handles sudden library collases (500 errors)
+// serverErrorResponse handles sudden library collapses (500 errors)
 func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
 

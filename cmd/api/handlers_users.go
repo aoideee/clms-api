@@ -12,7 +12,7 @@ import (
 )
 
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
-	// Expected JSON paylod from the librarian (No password field)
+	// Expected JSON payload from the librarian (No password field)
 	var input struct {
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
@@ -132,7 +132,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Delete the activation token from teh database so it can never be used again
+	// Delete the activation token from the database so it can never be used again
 	err = app.models.Token.DeleteAllForUser(data.ScopeActivation, user.UserID)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)

@@ -54,7 +54,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
-	// If the password don't match, send the 401 Unauthorized error
+	// If the passwords don't match, send the 401 Unauthorized error
 	if !match {
 		app.invalidCredentialsResponse(w, r)
 		return

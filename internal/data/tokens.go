@@ -33,7 +33,7 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 		Scope:  scope,
 	}
 
-	// Cretae a byte slice and fill it with 16 cryptographically secure random bytes
+	// Create a byte slice and fill it with 16 cryptographically secure random bytes
 	randomBytes := make([]byte, 16)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
@@ -43,7 +43,7 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 	// Encode the 16 bytes into a base-32 string (this results in exactly 26 characters)
 	token.Plaintext = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
 
-	// Hash the plaintetxt token using SHA-256 to store safely in the database
+	// Hash the plaintext token using SHA-256 to store safely in the database
 	hash := sha256.Sum256([]byte(token.Plaintext))
 	token.Hash = hash[:]
 

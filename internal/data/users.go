@@ -92,7 +92,7 @@ func ValidateUser(v *validator.Validator, user *User) {
 	v.Check(user.LastName != "", "last_name", "must be provided")
 	v.Check(len(user.LastName) <= 100, "last_name", "must not be more than 100 characters long")
 
-	// Validae the email using the helper function
+	// Validate the email using the helper function
 	ValidateEmail(v, user.Email)
 
 	// Validate the plain text password
@@ -144,7 +144,7 @@ func (m UserModel) Insert(user *User) error {
 	return nil
 }
 
-// GetByEmail retrives a user's details based on their email address
+// GetByEmail retrieves a user's details based on their email address
 func (m UserModel) GetByEmail(email string) (*User, error) {
 	query := `
 		SELECT UserID, CreatedAt, FirstName, LastName, Email, PasswordHash, Role, Activated, Version
@@ -222,19 +222,19 @@ func (m UserModel) Update(user *User) error {
 // Token methods       //
 //*********************//
 
-// GetForToken retieves a user from the database using a specific token and scope
+// GetForToken retrieves a user from the database using a specific token and scope
 func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
 	// Calculate the hash for the plaintext token provided by the client
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
 	// Uses an INNER JOIN to fetch the User details based on a match in the Tokens table
 	query := `
-			SELECT Users.UserID, Users.CreatedAt, Useres.FirstName, Users.LastName, Users.Email, Users.PasswordHash, Users.Role, Users.Activated, Users.Version
+			SELECT Users.UserID, Users.CreatedAt, Users.FirstName, Users.LastName, Users.Email, Users.PasswordHash, Users.Role, Users.Activated, Users.Version
 			FROM Users
 			INNER JOIN Tokens ON Users.UserID = Tokens.UserID
 			WHERE Tokens.Hash = $1
 			AND Tokens.Scope = $2
-			AND Tokens.Expirey > $3`
+			AND Tokens.Expiry > $3`
 
 	// Pass tokenHash[:] to convert the array to a slice
 	args := []any{tokenHash[:], tokenScope, time.Now()}

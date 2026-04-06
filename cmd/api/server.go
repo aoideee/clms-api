@@ -14,7 +14,7 @@ import (
 )
 
 func (app *application) serve() error {
-	// Configire the HTTP server with robust timeouts
+	// Configure the HTTP server with robust timeouts
 	srv := &http.Server{
 		Addr: 	   fmt.Sprintf(":%d", app.config.port),
 		Handler:   app.routes(),
