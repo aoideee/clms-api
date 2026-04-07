@@ -54,9 +54,8 @@ func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Requ
 }
 
 // badRequestResponse handles 400 Bad Request errors
-func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request) {
-	message := "The request could not be understood by the server due to malformed syntax."
-	app.errorResponse(w, r, http.StatusBadRequest, message)
+func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
 // invalidCredentialsResponse handles 401 Unauthorized errors
