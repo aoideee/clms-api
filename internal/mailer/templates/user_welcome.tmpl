@@ -1,0 +1,115 @@
+{{define "subject"}} Welcome to the Comments Community! {{end}}
+
+{{define "plainBody"}}
+Hi,
+Thanks for signing up for a Comments Community account. We're excited to have you on board!
+For future reference, your user ID number is {{.ID}}.
+
+Please send a request to the `PUT /v1/users/activated` endpoint with the following JSON body to activate your account:
+{"token": "{{.activationToken}}"}
+
+Thanks,
+The Comments Community Team
+{{end}}
+
+{{define "htmlBody"}}
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f4f7fa;
+      color: #333333;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .header {
+      background-color: #4a90e2;
+      color: #ffffff;
+      padding: 30px 40px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .content {
+      padding: 40px;
+    }
+    p {
+      margin: 0 0 20px;
+      font-size: 16px;
+    }
+    .token-box {
+      background-color: #f8f9fc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 25px 0;
+      text-align: center;
+    }
+    code {
+      font-family: 'Courier New', Courier, monospace;
+      color: #e53e3e;
+      font-size: 14px;
+      background-color: #fffaf0;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    pre {
+      margin: 0;
+      background: transparent;
+      padding: 0;
+      color: #2d3748;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .footer {
+      background-color: #f8f9fc;
+      border-top: 1px solid #edf2f7;
+      padding: 20px 40px;
+      text-align: center;
+      color: #718096;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Welcome to the Community!</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hi there,</p>
+      <p>Thanks for signing up for a Comments Community account. We're incredibly excited to have you on board!</p>
+      <p>For future reference, your user ID number is <strong>{{.ID}}</strong>.</p>
+      
+      <p>To fully activate your account, please send a <code>PUT</code> request to the <code>/v1/users/activated</code> endpoint with the following JSON body:</p>
+      
+      <div class="token-box">
+        <pre><code>{"token": "{{.activationToken}}"}</code></pre>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p style="margin:0;">Thanks,<br>The Comments Community Team</p>
+    </div>
+  </div>
+</body>
+</html>
+{{end}}

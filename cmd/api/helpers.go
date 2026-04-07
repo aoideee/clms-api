@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -50,4 +51,26 @@ func (app *application) readJSON(r *http.Request, dst any) error {
 	}
 
 	return nil
+}
+
+// background runs an arbitrary function in a background goroutine.
+func (app *application) background(fn func()) {
+	// Increment the WaitGroup counter.
+	app.wg.Add(1)
+
+	// Launch a background goroutine.
+	go func() {
+		// Decrement the WaitGroup counter when the goroutine completes.
+		defer app.wg.Done()
+
+		// Recover any panic.
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.Error("background task panic", "error", fmt.Errorf("%s", err))
+			}
+		}()
+
+		// Execute the arbitrary function that we passed as the parameter.
+		fn()
+	}()
 }

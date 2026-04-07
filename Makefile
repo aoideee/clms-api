@@ -16,7 +16,12 @@ run/api:
 		-limiter-rps=2 \
 		-limiter-burst=5 \
 		-cors-trusted-origins="http://localhost:9000 http://localhost:9001" \
-		-db-dsn=${CLMS_DB_DSN}
+		-db-dsn=${CLMS_DB_DSN} \
+		-smtp-host=sandbox.smtp.mailtrap.io \
+		-smtp-port=2525 \
+		-smtp-username=c87b833cae2beb \
+		-smtp-password=b4557436bc94d6 \
+		-smtp-sender="Community Library <no-reply@bnlsis.org>"
 
 ## db/psql: Connect to the library database using psql
 .PHONY: db/psql
