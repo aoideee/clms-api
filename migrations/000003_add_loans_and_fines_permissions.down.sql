@@ -1,0 +1,1 @@
+DELETE FROM permissions WHERE code IN ('loans:read', 'loans:write', 'fines:read', 'fines:write');
