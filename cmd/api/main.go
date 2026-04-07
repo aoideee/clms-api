@@ -5,14 +5,16 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
-	"expvar"
 
 	"github.com/aoideee/clms-api/internal/data"
+	"github.com/aoideee/clms-api/internal/mailer"
 	_ "github.com/lib/pq"
 )
 
@@ -34,6 +36,14 @@ type config struct {
 	cors struct {
 		trustedOrigins []string
 	}
+
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 // application holds the tools needed to run our library system properly
@@ -41,6 +51,8 @@ type application struct {
 	config config
 	logger *slog.Logger
 	models data.Models
+	mailer mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 // Custom metrics to track library activity
@@ -74,6 +86,13 @@ func main() {
 		return nil
 	})
 
+	// SMTP settings
+	flag.StringVar(&cfg.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&cfg.smtp.port, "smtp-port", 2525, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", "", "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", "", "SMTP password")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Community Library <no-reply@clms.local>", "SMTP sender")
+
 	// Parse the command-line flags
 	flag.Parse()
 
@@ -106,6 +125,7 @@ func main() {
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
 	}
 
 	// Start the HTTP server
