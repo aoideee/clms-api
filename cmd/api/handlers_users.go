@@ -62,11 +62,19 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Log the token to the terminal (for testing purposes)
-	app.logger.Info("user registered and activation token generated",
-		"activation_token", token.Plaintext,
-		"email", user.Email,
-	)
+
+
+	app.background(func() {
+		data := map[string]any{
+			"activationToken": token.Plaintext,
+			"ID":              user.UserID, // Note: We use UserID to match your struct and template!
+		}
+
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
+		if err != nil {
+			app.logger.Error("failed to send welcome email", "error", err)
+		}
+	})
 
 	// Return a 201 Created response to the user
 	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
