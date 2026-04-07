@@ -22,5 +22,12 @@ VALUES
 (1, 4, 'BNL-00004', 'Available'); -- Old Ben Tree
 
 -- 5. Register our "VIP" Member
-INSERT INTO Member (FirstName, LastName, DOB, PhoneNumber, Email, Address, AccountStatus)
-VALUES ('Evan', 'Hyde', '1947-04-30', '501-822-1234', 'evan.hyde@example.com', 'Belize City', 'Active');
+WITH InsertedUser AS (
+    INSERT INTO Users (FirstName, LastName, Email, Role, Activated)
+    VALUES ('Evan', 'Hyde', 'evan.hyde@example.com', 'Member', false)
+    ON CONFLICT (Email) DO UPDATE SET FirstName = EXCLUDED.FirstName
+    RETURNING UserID
+)
+INSERT INTO Member (UserID, DOB, PhoneNumber, Address, AccountStatus)
+SELECT UserID, '1947-04-30', '501-822-1234', 'Belize City', 'Active' 
+FROM InsertedUser;

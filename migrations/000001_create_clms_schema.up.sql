@@ -1,6 +1,7 @@
 -- NEW: Add Users table for authentication
 CREATE TABLE Users (
     UserID SERIAL PRIMARY KEY,
+    CreatedAt TIMESTAMP NOT NULL DEFAULT NOW(),
     Email VARCHAR(100) UNIQUE NOT NULL,
     PasswordHash BYTEA, -- Nullable because members might use Magic Links instead of passwords
     FirstName VARCHAR(100) NOT NULL,

@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/aoideee/clms-api/internal/validator"
@@ -142,7 +143,7 @@ func (m UserModel) Insert(user *User) error {
 	if err != nil {
 		switch {
 		// If the email already exists, PostgreSQL throws a unique constraint error
-		case err.Error() == `pq: duplicate key value violates unique constraint "user_email_key"`:
+		case strings.Contains(err.Error(), "duplicate key value violates unique constraint"):
 			return ErrDuplicateEmail
 		default:
 			return err
@@ -213,8 +214,7 @@ func (m UserModel) Update(user *User) error {
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
 	if err != nil {
 		switch {
-		// Checks if the updated email conflicts with another user
-		case err.Error() == `pq: duplicate key value violates unique constraint "user_email_key"`:
+		case strings.Contains(err.Error(), "duplicate key value violates unique constraint"):
 			return ErrDuplicateEmail
 		case errors.Is(err, sql.ErrNoRows):
 			return ErrEditConflict
