@@ -19,6 +19,9 @@ var ErrDuplicateEmail = errors.New("duplicate email")
 // ErrEditConflict is a custom error raised when the version number doesn't match
 var ErrEditConflict = errors.New("edit conflict")
 
+// AnonymousUser is a global variable
+var AnonymousUser = &User{}
+
 type User struct {
 	UserID    int64     `json:"user_id"`
 	Email     string    `json:"email"`
@@ -29,6 +32,11 @@ type User struct {
 	Activated bool      `json:"activated"`
 	CreatedAt time.Time `json:"created_at"`
 	Version   int       `json:"-"`
+}
+
+// IsAnonymous returns true if the User is the anonymous user
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 //*********************//
