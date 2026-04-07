@@ -4,6 +4,7 @@ package main
 
 import (
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -11,21 +12,26 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/aoideee/clms-api/internal/data"
 	"golang.org/x/time/rate"
 )
+
+//*********************//
+// Rate limiting       //
+//*********************//
 
 // rateLimitMiddleware is a middleware function that limits the number of requests a client can make to the API within a certain time period.
 func (app *application) rateLimit(next http.Handler) http.Handler {
 	// Creates a map to store the rate limiters for each client IP address, and a mutex to protect access to the map.
 	var (
-		mu sync.Mutex
+		mu      sync.Mutex
 		clients = make(map[string]*rate.Limiter)
 	)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only enforces the limit if enabled in the configuration (main.go)
 		if app.config.limiter.enabled {
-			
+
 			// Get the client's IP address from the request
 			ip, _, err := net.SplitHostPort(r.RemoteAddr)
 			if err != nil {
@@ -50,12 +56,16 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 			}
 
 			mu.Unlock()
-			}
+		}
 
 		// If the request is allowed, call the next handler in the chain
 		next.ServeHTTP(w, r)
 	})
 }
+
+//*********************//
+// CORS                //
+//*********************//
 
 // enableCORS is a middleware function that adds the necessary CORS headers to the response to allow cross-origin requests from trusted origins
 func (app *application) enableCORS(next http.Handler) http.Handler {
@@ -64,7 +74,7 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 		// may vary based on the Origin header, preventing improper caching
 		vary := w.Header().Get("Vary")
 		if vary != "" {
-			w.Header().Set("Vary", "Origin, Access-Control-Request-Method, " + vary)
+			w.Header().Set("Vary", "Origin, Access-Control-Request-Method, "+vary)
 		} else {
 			w.Header().Set("Vary", "Origin, Access-Control-Request-Method")
 		}
@@ -95,6 +105,10 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 	})
 }
 
+//*********************//
+// Gzip                //
+//*********************//
+
 // Gzip response writer that wraps the standard http.ResponseWriter and provides gzip compression for the response body.
 type gzipResponseWriter struct {
 	io.Writer
@@ -117,6 +131,10 @@ func (w *gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
+//*********************//
+// Gzip                //
+//*********************//
+
 // compressResponse is a middleware function that compresses the response body using gzip if the client supports it.
 func (app *application) compressResponse(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -138,6 +156,10 @@ func (app *application) compressResponse(next http.Handler) http.Handler {
 	})
 }
 
+//*********************//
+// Panic recovery      //
+//*********************//
+
 // recoverPanic is a middleware function that recovers from any panics that occur during the handling of a request and returns a 500 Internal Server Error response.
 func (app *application) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -149,4 +171,94 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 		}()
 		next.ServeHTTP(w, r)
 	})
+}
+
+//*********************//
+// Authentication      //
+//*********************//
+
+// authenticate is a middleware function that authenticates the user based on the Authorization header.
+func (app *application) authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Add the "Vary: Authorization" header to tell browsers that the response
+		// may vary based on the Authorization header, preventing improper caching
+		w.Header().Add("Vary", "Authorization")
+
+		// Get the Authorization header from the request
+		authorizationHeader := r.Header.Get("Authorization")
+
+		// If there is no Authorization header, treat the user as Anonymous
+		if authorizationHeader == "" {
+			r = app.contextSetUser(r, data.AnonymousUser)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Split the Authorization header into the token type and the token itself
+		headerParts := strings.Split(authorizationHeader, " ")
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+			app.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+
+		// Get the token from the Authorization header
+		token := headerParts[1]
+
+		// Validate the token to ensure it is in a sensible format
+		if len(token) != 26 {
+			app.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+
+		// Get the user from the database based on the token
+		user, err := app.models.Users.GetForToken(data.ScopeAuthentication, token)
+		if err != nil {
+			switch {
+			case errors.Is(err, data.ErrRecordNotFound):
+				app.invalidAuthenticationTokenResponse(w, r)
+			default:
+				app.serverErrorResponse(w, r, err)
+			}
+			return
+		}
+
+		// Set the user in the request context
+		r = app.contextSetUser(r, user)
+
+		// Call the next handler in the chain
+		next.ServeHTTP(w, r)
+	})
+}
+
+// requireAuthenticatedUser checks that a user is not anonymous
+func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		if user.IsAnonymous() {
+			app.authenticationRequiredResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+
+// requireActivatedUser checks that a user is both activated and authenticated
+func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		// Checks if the user is activated
+		if !user.Activated {
+			app.inactiveAccountResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+
+	return app.requireAuthenticatedUser(fn)
+
 }
