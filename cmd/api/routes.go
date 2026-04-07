@@ -36,19 +36,19 @@ func (app *application) routes() http.Handler {
 	// Books endpoints     //
 	//*********************//
 
-	mux.HandleFunc("POST /v1/books", app.createBookHandler)
-	mux.HandleFunc("GET /v1/books/{id}", app.showBookHandler)
-	mux.HandleFunc("PATCH /v1/books/{id}", app.updateBookHandler)
-	mux.HandleFunc("DELETE /v1/books/{id}", app.deleteBookHandler)
-	mux.HandleFunc("GET /v1/books", app.listBooksHandler)
+	mux.HandleFunc("POST /v1/books", app.requirePermission("books:write", app.createBookHandler))
+	mux.HandleFunc("GET /v1/books/{id}", app.requirePermission("books:read", app.showBookHandler))
+	mux.HandleFunc("PATCH /v1/books/{id}", app.requirePermission("books:write", app.updateBookHandler))
+	mux.HandleFunc("DELETE /v1/books/{id}", app.requirePermission("books:write", app.deleteBookHandler))
+	mux.HandleFunc("GET /v1/books", app.requirePermission("books:read", app.listBooksHandler))
 
 	//*********************//
 	// Users endpoints     //
 	//*********************//
 
-	// Register a new user (librarian)
-	mux.HandleFunc("POST /v1/users", app.registerUserHandler)
-	// Activate an account (user)
+	// PROTECTED: Only staff can register a new user (librarian creating a citizen profile)
+	mux.HandleFunc("POST /v1/users", app.requirePermission("members:write", app.registerUserHandler))
+	// PUBLIC: Anyone with an email link can activate their account
 	mux.HandleFunc("PUT /v1/users/activated", app.activateUserHandler)
 
 	//*********************//
@@ -60,22 +60,22 @@ func (app *application) routes() http.Handler {
 	// Members endpoints   //
 	//*********************//
 
-	mux.HandleFunc("POST /v1/members", app.createMemberHandler)
-	mux.HandleFunc("GET /v1/members/{id}", app.showMemberHandler)
-	mux.HandleFunc("PATCH /v1/members/{id}", app.updateMemberHandler)
-	mux.HandleFunc("DELETE /v1/members/{id}", app.deleteMemberHandler)
+	mux.HandleFunc("POST /v1/members", app.requirePermission("members:write", app.createMemberHandler))
+	mux.HandleFunc("GET /v1/members/{id}", app.requirePermission("members:read", app.showMemberHandler))
+	mux.HandleFunc("PATCH /v1/members/{id}", app.requirePermission("members:write", app.updateMemberHandler))
+	mux.HandleFunc("DELETE /v1/members/{id}", app.requirePermission("members:write", app.deleteMemberHandler))
 
 	//*********************//
 	// Loans endpoints     //
 	//*********************//
 
-	mux.HandleFunc("POST /v1/loans", app.createLoanHandler)
+	mux.HandleFunc("POST /v1/loans", app.requirePermission("loans:write", app.createLoanHandler))
 
 	//*********************//
 	// Fines endpoints     //
 	//*********************//
 
-	mux.HandleFunc("POST /v1/fines", app.createFineHandler)
+	mux.HandleFunc("POST /v1/fines", app.requirePermission("fines:write", app.createFineHandler))
 
 	return app.authenticate(app.compressResponse(app.recoverPanic(app.enableCORS(app.rateLimit(mux)))))
 }
