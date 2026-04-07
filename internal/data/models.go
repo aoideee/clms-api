@@ -18,6 +18,7 @@ type Models struct {
 	Members MemberModel
 	Users UserModel
 	Token TokenModel
+	Permissions PermissionModel
 }
 
 // NewModels returns a fully populated Models struct, initializing each individual model with the database connection pool.
@@ -29,5 +30,6 @@ func NewModels(db *sql.DB) Models {
 		Members: MemberModel{DB: db},
 		Users: UserModel{DB: db},
 		Token: TokenModel{DB: db},
+		Permissions: PermissionModel{DB: db},
 	}
 }

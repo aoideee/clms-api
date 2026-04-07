@@ -42,7 +42,6 @@ func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request)
 	app.errorResponse(w, r, http.StatusNotFound, message)
 }
 
-
 // failedValidationResponse sends a 422 Unprocessable Entity status code and the map of validation errors.
 func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
 	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
@@ -56,12 +55,35 @@ func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Requ
 
 // badRequestResponse handles 400 Bad Request errors
 func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
-	message := "The request could not be understood by the server due to malformed syntax."
-	app.errorResponse(w, r, http.StatusBadRequest, message)
+	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
 // invalidCredentialsResponse handles 401 Unauthorized errors
 func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
 	message := "Invalid authentication credentials."
 	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+// invalidAuthenticationTokenResponse handles 401 Unauthorized errors
+func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	message := "Invalid or missing authentication token."
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+// authenticationRequiredResponse handles user log in errors
+func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you must be authenticated to access this resource"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+// inactiveAccountResponse handles unactivated accounts
+func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account must be activated to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, message)
+}
+
+// notPermittedResponse handles 403 Forbidden errors
+func (app *application) notPermittedResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account doesn't have the necessary permissions to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, message)
 }

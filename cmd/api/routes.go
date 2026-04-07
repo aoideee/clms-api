@@ -77,6 +77,5 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("POST /v1/fines", app.createFineHandler)
 
-	return app.compressResponse(app.recoverPanic(app.enableCORS(app.rateLimit(mux))))
-
+	return app.authenticate(app.compressResponse(app.recoverPanic(app.enableCORS(app.rateLimit(mux)))))
 }

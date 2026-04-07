@@ -24,7 +24,7 @@ type Metadata struct {
 }
 
 // calculateMetadata is our mathematical helper. It figures out how many pages exist in total.
-func calculateMetadata(totalRecords, page, pageSize int) Metadata {
+func CalculateMetadata(totalRecords, page, pageSize int) Metadata {
 	if totalRecords == 0 {
 		return Metadata{} // Return an empty struct if there are no books
 	}
