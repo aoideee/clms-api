@@ -62,11 +62,23 @@ func (app *application) createBookHandler(w http.ResponseWriter, r *http.Request
 
 // listBooksHandler handles GET requests to retrieve a list of books.
 func (app *application) listBooksHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract query parameters
+	// 1. Extract query parameters
 	title := r.URL.Query().Get("title")
 	isbn := r.URL.Query().Get("isbn")
 
-	books, err := app.models.Books.GetAll(title, isbn)
+	// 2. Set default pagination values
+	page := 1
+	pageSize := 10
+
+	// 3. Extract and parse the "page" parameter
+	if p := r.URL.Query().Get("page"); p != "" {
+		if parsedPage, err := strconv.Atoi(p); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+
+	// 4. Pass the new pagination parameters to your model
+	books, err := app.models.Books.GetAll(title, isbn, page, pageSize)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
