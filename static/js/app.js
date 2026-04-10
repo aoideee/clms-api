@@ -4,6 +4,7 @@ import { emitter } from "./core/event-emitter.js";
 import { state } from "./core/state.js";
 import { DataService } from "./core/data-service.js";
 import { renderBooks } from "./features/render-books.js";
+import { renderLogin, renderHeader } from "./features/auth.js";
 
 // --- OBSERVERS FOR DOWNWARD DATA FLOW (API -> State -> Screen) ---
 
@@ -51,7 +52,53 @@ emitter.on("books:pageRequested", async (newPage) => {
   }
 });
 
+// --- OBSERVERS FOR AUTH DATA FLOW ---
+
+emitter.on("auth:loginRequested", async ({ email, password }) => {
+  state.loading = true;
+  state.error = null;
+  renderLogin();
+
+  try {
+    const data = await DataService.login(email, password);
+    
+    // Save token to state and storage
+    state.token = data.authentication_token.token;
+    localStorage.setItem("clms_token", state.token);
+    
+    state.loading = false;
+    
+    // Update header to show logout button
+    renderHeader();
+    
+    // Switch to books view
+    emitter.emit("books:pageRequested", 1);
+  } catch (err) {
+    state.loading = false;
+    state.error = "Invalid email or password."; 
+    renderLogin();
+  }
+});
+
+emitter.on("auth:logoutRequested", () => {
+  // Clear everything
+  state.token = null;
+  state.books = [];
+  localStorage.removeItem("clms_token");
+
+  // Re-render
+  renderHeader();
+  renderLogin();
+});
+
 // --- BOOT ---
 
-// Kick off the very first fetch for Page 1 when the app loads
-emitter.emit("books:pageRequested", 1);
+// Initialize header
+renderHeader();
+
+// If we don't have a token, show login. Otherwise, fetch books.
+if (!state.token) {
+  renderLogin();
+} else {
+  emitter.emit("books:pageRequested", 1);
+}
