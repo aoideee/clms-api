@@ -31,12 +31,24 @@ emitter.on("books:error", (msg) => {
 
 // --- OBSERVER FOR UPWARD DATA FLOW (Screen -> State -> API) ---
 
-emitter.on("books:pageRequested", (newPage) => {
+emitter.on("books:pageRequested", async (newPage) => {
   // 1. Update the state with the new page number
   state.currentPage = newPage;
 
-  // 2. Tell the DataService to go fetch that specific page
-  DataService.fetchBooks(newPage);
+  // 2. Tell the UI to show the loading spinner
+  emitter.emit("books:loading");
+
+  try {
+    // 3. Fetch the actual data from the Go backend
+    const data = await DataService.fetchBooks(newPage);
+
+    // 4. Notify everyone that the data is here!
+    // (Assuming backend returns { "books": [...] })
+    emitter.emit("books:loaded", data.books);
+  } catch (err) {
+    // 5. Handle any network or server errors
+    emitter.emit("books:error", err.message);
+  }
 });
 
 // --- BOOT ---

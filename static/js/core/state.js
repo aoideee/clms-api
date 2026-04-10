@@ -13,6 +13,6 @@ export const state = {
     totalBooks: 0,
 
     // UI state
-    isLoading: false,
+    loading: false,
     error: null,
 }
