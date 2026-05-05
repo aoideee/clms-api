@@ -10,13 +10,13 @@ export function renderBooks() {
 
   // 1. Handle Loading
   if (state.loading) {
-    app.innerHTML = `<div class="status-loading"><span class="spinner">Loading the CLMS catalog...</span></div>`;
+    app.innerHTML = `<div class="status-loading"><span class="spinner">Loading the CLMS catalog…</span></div>`;
     return;
   }
 
   // 2. Handle Error
   if (state.error) {
-    app.innerHTML = `<div class="status-error">! ${state.error}</div>`;
+    app.innerHTML = `<div class="status-error">&#9888; ${state.error}</div>`;
     return;
   }
 
@@ -26,14 +26,14 @@ export function renderBooks() {
     return;
   }
 
-  // 4. The Happy Path - Render the Belizean Literature
+  // 4. The Happy Path — Render the book catalog
   const bookCards = state.books
     .map(
       (book) => `
-        <div class="book-card" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; background: white;">
-            <h3 style="margin-top: 0; color: #4a90e2;">${book.title}</h3>
-            <p style="margin: 5px 0; font-size: 0.9em; color: #666;"><strong>ISBN:</strong> ${book.isbn}</p>
-            <p style="margin: 5px 0;">${book.description || "No description available."}</p>
+        <div class="book-card">
+            <h3>${book.title}</h3>
+            <p class="book-meta"><strong>ISBN:</strong> ${book.isbn}</p>
+            <p class="book-desc">${book.description || "No description available."}</p>
         </div>
     `,
     )
@@ -41,17 +41,17 @@ export function renderBooks() {
 
   // 5. Pagination Controls
   const controls = `
-        <div class="pagination" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-            <button id="prev-btn" ${state.currentPage === 1 ? "disabled" : ""}>Previous</button>
-            <span>Page ${state.currentPage}</span>
-            <button id="next-btn" ${!state.hasNextPage ? "disabled" : ""}>Next</button>
+        <div class="pagination">
+            <button id="prev-btn" class="btn-page" ${state.currentPage === 1 ? "disabled" : ""}>← Previous</button>
+            <span class="pagination-label">Page ${state.currentPage} of ${state.totalPages}</span>
+            <button id="next-btn" class="btn-page" ${!state.hasNextPage ? "disabled" : ""}>Next →</button>
         </div>
     `;
 
   // Write the DOM exactly once
   app.innerHTML = `<div>${bookCards}</div>${controls}`;
 
-  // 6. Attach Event Listeners to the buttons (The "Upward" Flow)
+  // 6. Attach Event Listeners (Upward Flow)
   const prevBtn = document.querySelector("#prev-btn");
   const nextBtn = document.querySelector("#next-btn");
 

@@ -13,8 +13,8 @@ export const state = {
     pageSize: 10,
     hasNextPage: true,
     hasPreviousPage: false,
-    totalPages: 1,
-    totalBooks: 0,
+    totalPages: 3,
+    totalBooks: 21,
 
     // UI state
     loading: false,
