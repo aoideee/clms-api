@@ -90,19 +90,24 @@ func (m BookModel) Get(id int64) (*Book, error) {
 	return &book, nil
 }
 
-func (m BookModel) GetAll(title string, isbn string) ([]*Book, error) {
-	// We use ILIKE for case-insensitive searching
+func (m BookModel) GetAll(title string, isbn string, page int, pageSize int) ([]*Book, error) {
+	// Add LIMIT and OFFSET to the bottom of your SQL query
 	query := `
 		SELECT BookID, Title, ISBN, Publisher, PublicationYear, MinimumAge, Description
 		FROM Books
 		WHERE (STRPOS(LOWER(Title), LOWER($1)) > 0 OR $1 = '')
 		AND (STRPOS(LOWER(ISBN), LOWER($2)) > 0 OR $2 = '')
-		ORDER BY BookID`
+		ORDER BY BookID
+		LIMIT $3 OFFSET $4`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, title, isbn)
+	// Calculate the mathematical offset
+	offset := (page - 1) * pageSize
+
+	// Pass pageSize ($3) and offset ($4) into the query execution
+	rows, err := m.DB.QueryContext(ctx, query, title, isbn, pageSize, offset)
 	if err != nil {
 		return nil, err
 	}

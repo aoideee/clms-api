@@ -15,7 +15,9 @@ func (app *application) routes() http.Handler {
 	// Default catch-all   //
 	//*********************//
 
-	mux.HandleFunc("/", app.notFoundResponse)
+	// Serve static files from the "static" directory
+	fileServer := http.FileServer(http.Dir("./static"))
+	mux.Handle("/", http.StripPrefix("/", fileServer))
 
 	//*********************//
 	// Healthcheck endpoint//
